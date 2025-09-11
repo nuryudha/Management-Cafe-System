@@ -25,18 +25,22 @@ public class UserServiceImp implements UserService {
     @Override
     public ResponseEntity<String> signUp(Map<String, String> requestMap) {
         log.info("Inside signup {}",requestMap);
-        if(validateSignUpMap(requestMap)) {
-            User user = userDao.findByEmailId(requestMap.get("email"));
-//            TODO : Melanjutkan BRO
-            if(Objects.isNull(user)){
-//                userDao.save()
-            }else{
-                return CafeUtils.getResponseEntity("Email already exist",HttpStatus.BAD_REQUEST);
+        try {
+            if (validateSignUpMap(requestMap)) {
+                User user = userDao.findByEmailId(requestMap.get("email"));
+                if (Objects.isNull(user)) {
+                    userDao.save(getUserForMap(requestMap));
+                    return CafeUtils.getResponseEntity("Successfully Registered", HttpStatus.OK);
+                } else {
+                    return CafeUtils.getResponseEntity("Email already exist", HttpStatus.BAD_REQUEST);
+                }
+            } else {
+                return CafeUtils.getResponseEntity(CafeConstant.INVALID_DATA, HttpStatus.BAD_REQUEST);
             }
-        }else{
-            return CafeUtils.getResponseEntity(CafeConstant.INVALID_DATA, HttpStatus.BAD_REQUEST);
+        }catch (Exception ex){
+            ex.printStackTrace();
         }
-        return  null;
+        return CafeUtils.getResponseEntity(CafeConstant.SOMETHING_WENT_WRONG,HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private boolean validateSignUpMap(Map<String,String> requestMap){
@@ -45,5 +49,16 @@ public class UserServiceImp implements UserService {
             return true;
         }
         return false;
+    }
+
+    private User getUserForMap(Map<String,String>requestMap){
+        User user = new User();
+        user.setName(requestMap.get("name"));
+        user.setContactNumber(requestMap.get("contactNumber"));
+        user.setEmail(requestMap.get("email"));
+        user.setPassword(requestMap.get("password"));
+        user.setStatus(requestMap.get("false"));
+        user.setRole(requestMap.get("user"));
+        return user;
     }
 }
