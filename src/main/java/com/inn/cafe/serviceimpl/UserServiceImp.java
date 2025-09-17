@@ -7,6 +7,7 @@ import com.inn.cafe.jwt.JwtFilter;
 import com.inn.cafe.jwt.JwtUtil;
 import com.inn.cafe.pojo.User;
 import com.inn.cafe.utils.CafeUtils;
+import com.inn.cafe.utils.EmailUtils;
 import com.inn.cafe.wrapper.UserWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,9 @@ public class UserServiceImp implements UserService {
 
     @Autowired
     JwtFilter jwtFilter;
+
+    @Autowired
+    EmailUtils emailUtils;
 
     @Override
     public ResponseEntity<String> signUp(Map<String, String> requestMap) {
@@ -130,6 +134,7 @@ public class UserServiceImp implements UserService {
                 Optional<User> optional = userDao.findById(Integer.parseInt(requestMap.get("id")));
                 if(!optional.isEmpty()){
                     userDao.updateStatus(requestMap.get("status"),Integer.parseInt(requestMap.get("id")));
+                    sendMailToAllAdmin(requestMap.get("status"),optional.get().getEmail(),userDao.getAllAdmin());
                     return CafeUtils.getResponseEntity("User Updated Status Successfully",HttpStatus.OK);
                 }else{
                     CafeUtils.getResponseEntity("User id doesn't exist.", HttpStatus.OK);
@@ -142,4 +147,21 @@ public class UserServiceImp implements UserService {
         }
         return CafeUtils.getResponseEntity(CafeConstant.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    private void sendMailToAllAdmin(String status, String user, List<String> allAdmin) {
+        allAdmin.remove(jwtFilter.getCurrentUser());
+        if (status != null && status.equalsIgnoreCase("true")) {
+            emailUtils.sendSimpleMessage(jwtFilter.getCurrentUser(),"Account Approved","USER = - "
+                    + user +" \n" +
+                    " is Approved By \n" +
+                    " ADMIN = - " + jwtFilter.getCurrentUser() ,allAdmin);
+        } else {
+            emailUtils.sendSimpleMessage(jwtFilter.getCurrentUser(),"Account Disabled","USER = - "
+                    + user +" \n" +
+                    " is Disabled   By \n" +
+                    " ADMIN = - " + jwtFilter.getCurrentUser() ,allAdmin);
+
+        }
+    }
+
 }
