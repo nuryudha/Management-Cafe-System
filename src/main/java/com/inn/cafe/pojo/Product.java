@@ -9,6 +9,10 @@ import java.io.Serializable;
 
 @NamedQuery(name = "Product.getAllProduct", query = "Select new com.inn.cafe.wrapper.ProductWrapper(p.id,p.name,p.description,p.price,p.status,p.category.id, p.category.name) From Product p")
 
+@NamedQuery(name = "Product.updateProductionStatus", query = "UPDATE Product p SET p.status=:status WHERE p.id=:id")
+
+@NamedQuery(name = "Product.getProductByCategory", query = "SELECT new com.inn.cafe.wrapper.ProductWrapper(p.id,p.name) FROM Product p WHERE p.category.id=:id and p.status='true'")
+
 @Data
 @Entity
 @DynamicInsert

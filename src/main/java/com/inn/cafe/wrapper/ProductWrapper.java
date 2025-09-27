@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.criteria.CriteriaBuilder;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -35,6 +37,11 @@ public class ProductWrapper {
 //
 //
 //    }
+
+    public  ProductWrapper(Integer id, String name){
+        this.id = id;
+        this.name = name;
+    }
 
 
 }
