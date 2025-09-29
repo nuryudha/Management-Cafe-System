@@ -18,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -68,7 +70,7 @@ public class BillServiceImpl implements BillService {
 
                 JSONArray jsonArray = CafeUtils.getJsonArrayFromString((String) requestMap.get("productDetails"));
                 for (int i = 0; i < jsonArray.length(); i++) {
-                    addRows(table, CafeUtils.getMapFromJson(jsonArray.getString(i)))
+                    addRows(table, CafeUtils.getMapFromJson(jsonArray.getString(i)));
 
                 }
                 document.add(table);
@@ -78,8 +80,8 @@ public class BillServiceImpl implements BillService {
                 document.add(footer);
 
                 document.close();
-//TODO : Responses
-                return new ResponseEntity<>("",HttpStatus.OK);
+
+                return new ResponseEntity<>("{\"uuid\":\"" + fileName + "\"}", HttpStatus.OK);
 
             }
             return CafeUtils.getResponseEntity("Required data not found", HttpStatus.BAD_REQUEST);
@@ -88,6 +90,7 @@ public class BillServiceImpl implements BillService {
         }
         return CafeUtils.getResponseEntity(CafeConstant.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
 
     private void addRows(PdfPTable table, Map<String, Object> data) {
         log.info("Inside addRows");
@@ -104,7 +107,7 @@ public class BillServiceImpl implements BillService {
                 .forEach(columnTitle -> {
                     PdfPCell header = new PdfPCell();
                     header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-                    header.setBorder(2);
+                    header.setBorderWidth(2);
                     header.setPhrase(new Phrase(columnTitle));
                     header.setBackgroundColor(BaseColor.YELLOW);
                     header.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -138,7 +141,7 @@ public class BillServiceImpl implements BillService {
         react.enableBorderSide(2);
         react.enableBorderSide(4);
         react.enableBorderSide(8);
-        react.setBackgroundColor(BaseColor.BLACK);
+        react.setBorderColor(BaseColor.BLACK);
         react.setBorderWidth(1);
         document.add(react);
     }
@@ -167,5 +170,31 @@ public class BillServiceImpl implements BillService {
                 requestMap.containsKey("paymentMethod") &&
                 requestMap.containsKey("productDetails") &&
                 requestMap.containsKey("totalAmount");
+    }
+
+    @Override
+    public ResponseEntity<List<Bill>> getBills() {
+        List<Bill> list = new ArrayList<>();
+        if(jwtFilter.isAdmin()){
+            list = billDao.getAllBills();
+        }else{
+            list = billDao.getBillByUsername(jwtFilter.getCurrentUser());
+        }
+        return new ResponseEntity<>(list,HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<byte[]> getPdf(Map<String, Object> requestMap) {
+        log.info("Inside getPDF : requestMap {}",requestMap);
+        try {
+            byte[] byteArray = new byte[0];
+            if(!requestMap.containsKey("uuid") && validateRequestMap(requestMap)){
+                return new ResponseEntity<>(byteArray, HttpStatus.BAD_REQUEST);
+            }
+            String filePath = CafeConstant.STORE_LOCATION + "\\" + (String) requestMap.get("uuid") + ".pdf";
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return null;
     }
 }
